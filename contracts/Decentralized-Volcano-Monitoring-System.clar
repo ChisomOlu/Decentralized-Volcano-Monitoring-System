@@ -239,6 +239,13 @@
     (ok true)
   )
 )
+(define-public (reset-global-alert-level)
+  (begin
+    (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_UNAUTHORIZED)
+    (var-set global-alert-level ALERT_LEVEL_NORMAL)
+    (ok true)
+  )
+)
 
 (define-read-only (get-sensor-info (sensor-id uint))
   (map-get? sensors { sensor-id: sensor-id })

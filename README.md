@@ -12,6 +12,7 @@ This smart contract enables IoT seismic sensors to submit real-time volcanic act
 - 🌍 **Global Access**: Decentralized data accessible to anyone, anywhere
 - 🔒 **Immutable Logs**: All seismic data permanently recorded on blockchain
 - ⚙️ **Configurable Thresholds**: Customizable alert levels per sensor
+- 🔄 **Global Alert Reset**: Owner-controlled reset of global alert level for emergency recovery
 
 ## 🚀 Quick Start
 
@@ -58,6 +59,9 @@ Update alert thresholds for a sensor (sensor owner only)
 
 #### `activate-sensor` / `deactivate-sensor`
 Enable or disable a sensor (sensor owner only)
+
+#### `reset-global-alert-level`
+Reset global alert level to normal (contract owner only)
 
 ### Read-Only Functions
 
