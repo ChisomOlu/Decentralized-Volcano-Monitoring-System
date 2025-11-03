@@ -13,6 +13,7 @@ This smart contract enables IoT seismic sensors to submit real-time volcanic act
 - 🔒 **Immutable Logs**: All seismic data permanently recorded on blockchain
 - ⚙️ **Configurable Thresholds**: Customizable alert levels per sensor
 - 🔄 **Global Alert Reset**: Owner-controlled reset of global alert level for emergency recovery
+- 🔧 **Maintenance Mode**: Sensor owners can toggle maintenance mode to prevent false alerts during servicing
 
 ## 🚀 Quick Start
 
@@ -63,6 +64,11 @@ Enable or disable a sensor (sensor owner only)
 #### `reset-global-alert-level`
 Reset global alert level to normal (contract owner only)
 
+#### `set-sensor-maintenance`
+Toggle maintenance mode for a sensor (sensor owner only)
+- `sensor-id`: ID of the sensor
+- `maintenance-mode`: Boolean flag to enable/disable maintenance mode
+
 ### Read-Only Functions
 
 #### `get-sensor-info`
@@ -82,6 +88,9 @@ Check if evacuation is recommended for a sensor area
 
 #### `get-evacuation-radius`
 Get the recommended evacuation radius in kilometers
+
+#### `is-sensor-in-maintenance`
+Check if a sensor is currently in maintenance mode
 
 ## 🚨 Alert Levels
 
@@ -113,7 +122,7 @@ Default thresholds (can be customized per sensor):
 
 ### Sensor Data
 - Location coordinates and metadata
-- Activity status and ownership
+- Activity status, ownership, and maintenance mode
 - Last reading and timestamp
 
 ### Seismic Readings
@@ -129,9 +138,10 @@ Default thresholds (can be customized per sensor):
 ## 🛡️ Security
 
 - Only contract owner can register new sensors
-- Sensor owners control their device settings
+- Sensor owners control their device settings and maintenance status
 - All data is immutable once recorded
 - Automatic verification of reading validity
+- Maintenance mode prevents false alerts during sensor servicing
 
 ## 🌐 Global Access
 

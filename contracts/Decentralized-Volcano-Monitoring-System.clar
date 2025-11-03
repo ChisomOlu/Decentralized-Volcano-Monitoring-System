@@ -22,6 +22,7 @@
     latitude: int,
     longitude: int,
     active: bool,
+    maintenance: bool,
     last-reading: uint,
     last-timestamp: uint
   }
@@ -75,6 +76,7 @@
         latitude: latitude,
         longitude: longitude,
         active: true,
+        maintenance: false,
         last-reading: u0,
         last-timestamp: u0
       }
@@ -239,6 +241,17 @@
     (ok true)
   )
 )
+
+(define-public (set-sensor-maintenance (sensor-id uint) (maintenance-mode bool))
+  (let ((sensor-info (unwrap! (map-get? sensors { sensor-id: sensor-id }) ERR_SENSOR_NOT_FOUND)))
+    (asserts! (is-eq tx-sender (get owner sensor-info)) ERR_UNAUTHORIZED)
+    (map-set sensors
+      { sensor-id: sensor-id }
+      (merge sensor-info { maintenance: maintenance-mode })
+    )
+    (ok true)
+  )
+)
 (define-public (reset-global-alert-level)
   (begin
     (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_UNAUTHORIZED)
@@ -282,9 +295,16 @@
 (define-read-only (is-evacuation-required (sensor-id uint))
   (match (map-get? sensors { sensor-id: sensor-id })
     sensor-info (match (map-get? sensor-thresholds { sensor-id: sensor-id })
-      thresholds (>= (get last-reading sensor-info) (get high-threshold thresholds))
+      thresholds (and (not (get maintenance sensor-info)) (>= (get last-reading sensor-info) (get high-threshold thresholds)))
       false
     )
+    false
+  )
+)
+
+(define-read-only (is-sensor-in-maintenance (sensor-id uint))
+  (match (map-get? sensors { sensor-id: sensor-id })
+    sensor-info (get maintenance sensor-info)
     false
   )
 )
