@@ -154,3 +154,23 @@ All seismic data and alerts are publicly readable, enabling:
 ## 📈 Scalability
 
 The contract supports unlimited sensors and readings, with efficient data structures for real-time querying and historical analysis.
+
+## 🛑 Global Pause Mechanism
+
+- **Emergency Control**: Contract owner can pause all write operations during emergencies
+- **Security Enhancement**: Prevents malicious or erroneous transactions when paused
+- **Read Access Maintained**: Read-only functions remain available for monitoring
+- **Owner Authority**: Exclusive pause/unpause controls for contract administrator
+
+### Additional Public Functions
+
+#### `pause-contract`
+Pause all contract operations (contract owner only)
+
+#### `unpause-contract`
+Resume contract operations (contract owner only)
+
+### Additional Read-Only Functions
+
+#### `is-contract-paused`
+Check if the contract is currently paused

@@ -5,6 +5,7 @@
 (define-constant ERR_INVALID_READING (err u103))
 (define-constant ERR_SENSOR_NOT_FOUND (err u104))
 (define-constant ERR_INVALID_THRESHOLD (err u105))
+(define-constant ERR_CONTRACT_PAUSED (err u106))
 
 (define-constant ALERT_LEVEL_NORMAL u0)
 (define-constant ALERT_LEVEL_ELEVATED u1)
@@ -13,6 +14,7 @@
 
 (define-data-var next-sensor-id uint u1)
 (define-data-var global-alert-level uint ALERT_LEVEL_NORMAL)
+(define-data-var contract-paused bool false)
 
 (define-map sensors
   { sensor-id: uint }
@@ -66,6 +68,7 @@
 
 (define-public (register-sensor (location (string-ascii 100)) (latitude int) (longitude int))
   (let ((sensor-id (var-get next-sensor-id)))
+    (asserts! (not (var-get contract-paused)) ERR_CONTRACT_PAUSED)
     (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_UNAUTHORIZED)
     (asserts! (is-none (map-get? sensors { sensor-id: sensor-id })) ERR_SENSOR_EXISTS)
     (map-set sensors
@@ -96,12 +99,13 @@
 )
 
 (define-public (submit-reading (sensor-id uint) (magnitude uint))
-  (let 
+  (let
     (
       (sensor-info (unwrap! (map-get? sensors { sensor-id: sensor-id }) ERR_SENSOR_NOT_FOUND))
       (reading-id (var-get next-reading-id))
       (current-timestamp (unwrap-panic (get-stacks-block-info? time stacks-block-height)))
     )
+    (asserts! (not (var-get contract-paused)) ERR_CONTRACT_PAUSED)
     (asserts! (get active sensor-info) ERR_INVALID_SENSOR)
     (asserts! (> magnitude u0) ERR_INVALID_READING)
     (asserts! (< magnitude u1000) ERR_INVALID_READING)
@@ -195,6 +199,7 @@
 
 (define-public (update-sensor-thresholds (sensor-id uint) (normal uint) (elevated uint) (high uint) (critical uint))
   (let ((sensor-info (unwrap! (map-get? sensors { sensor-id: sensor-id }) ERR_SENSOR_NOT_FOUND)))
+    (asserts! (not (var-get contract-paused)) ERR_CONTRACT_PAUSED)
     (asserts! (is-eq tx-sender (get owner sensor-info)) ERR_UNAUTHORIZED)
     (asserts! (and (< normal elevated) (< elevated high) (< high critical)) ERR_INVALID_THRESHOLD)
     (map-set sensor-thresholds
@@ -212,6 +217,7 @@
 
 (define-public (deactivate-sensor (sensor-id uint))
   (let ((sensor-info (unwrap! (map-get? sensors { sensor-id: sensor-id }) ERR_SENSOR_NOT_FOUND)))
+    (asserts! (not (var-get contract-paused)) ERR_CONTRACT_PAUSED)
     (asserts! (is-eq tx-sender (get owner sensor-info)) ERR_UNAUTHORIZED)
     (map-set sensors
       { sensor-id: sensor-id }
@@ -223,6 +229,7 @@
 
 (define-public (activate-sensor (sensor-id uint))
   (let ((sensor-info (unwrap! (map-get? sensors { sensor-id: sensor-id }) ERR_SENSOR_NOT_FOUND)))
+    (asserts! (not (var-get contract-paused)) ERR_CONTRACT_PAUSED)
     (asserts! (is-eq tx-sender (get owner sensor-info)) ERR_UNAUTHORIZED)
     (map-set sensors
       { sensor-id: sensor-id }
@@ -233,6 +240,7 @@
 )
 (define-public (transfer-sensor-ownership (sensor-id uint) (new-owner principal))
   (let ((sensor-info (unwrap! (map-get? sensors { sensor-id: sensor-id }) ERR_SENSOR_NOT_FOUND)))
+    (asserts! (not (var-get contract-paused)) ERR_CONTRACT_PAUSED)
     (asserts! (is-eq tx-sender (get owner sensor-info)) ERR_UNAUTHORIZED)
     (map-set sensors
       { sensor-id: sensor-id }
@@ -244,6 +252,7 @@
 
 (define-public (set-sensor-maintenance (sensor-id uint) (maintenance-mode bool))
   (let ((sensor-info (unwrap! (map-get? sensors { sensor-id: sensor-id }) ERR_SENSOR_NOT_FOUND)))
+    (asserts! (not (var-get contract-paused)) ERR_CONTRACT_PAUSED)
     (asserts! (is-eq tx-sender (get owner sensor-info)) ERR_UNAUTHORIZED)
     (map-set sensors
       { sensor-id: sensor-id }
@@ -254,8 +263,25 @@
 )
 (define-public (reset-global-alert-level)
   (begin
+    (asserts! (not (var-get contract-paused)) ERR_CONTRACT_PAUSED)
     (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_UNAUTHORIZED)
     (var-set global-alert-level ALERT_LEVEL_NORMAL)
+    (ok true)
+  )
+)
+
+(define-public (pause-contract)
+  (begin
+    (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_UNAUTHORIZED)
+    (var-set contract-paused true)
+    (ok true)
+  )
+)
+
+(define-public (unpause-contract)
+  (begin
+    (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_UNAUTHORIZED)
+    (var-set contract-paused false)
     (ok true)
   )
 )
@@ -278,6 +304,10 @@
 
 (define-read-only (get-global-alert-level)
   (var-get global-alert-level)
+)
+
+(define-read-only (is-contract-paused)
+  (var-get contract-paused)
 )
 
 (define-read-only (get-sensor-count)
